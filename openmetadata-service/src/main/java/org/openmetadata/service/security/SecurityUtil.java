@@ -17,6 +17,7 @@ import static org.openmetadata.common.utils.CommonUtil.nullOrEmpty;
 import static org.openmetadata.service.security.JwtFilter.BOT_CLAIM;
 import static org.openmetadata.service.security.JwtFilter.EMAIL_CLAIM_KEY;
 import static org.openmetadata.service.security.JwtFilter.USERNAME_CLAIM_KEY;
+import static org.openmetadata.service.security.jwt.JWTTokenGenerator.ROLES_CLAIM;
 
 import com.auth0.jwt.interfaces.Claim;
 import com.google.common.collect.ImmutableMap;
@@ -176,9 +177,10 @@ public final class SecurityUtil {
     if (!nullOrEmpty(mapping)) {
       String username = mapping.get(USERNAME_CLAIM_KEY);
       String email = mapping.get(EMAIL_CLAIM_KEY);
-      if (nullOrEmpty(username) || nullOrEmpty(email)) {
+      String roles = mapping.get(ROLES_CLAIM);
+      if (nullOrEmpty(username) || nullOrEmpty(email) || nullOrEmpty(roles)) {
         throw new IllegalArgumentException(
-            "Invalid JWT Principal Claims Mapping. Both username and email should be present");
+            "Invalid JWT Principal Claims Mapping. Both username, email and roles should be present");
       }
     }
     // If emtpy, jwtPrincipalClaims will be used so no need to validate

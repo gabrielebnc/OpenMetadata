@@ -171,7 +171,7 @@ public class JwtFilter implements ContainerRequestFilter {
             catalogPrincipal,
             scheme,
             SecurityContext.DIGEST_AUTH,
-            getUserRolesFromClaims(claims, isBot(claims)));
+            getUserRolesFromClaims(jwtPrincipalClaimsMapping, claims, isBot(claims)));
     LOG.debug("SecurityContext {}", catalogSecurityContext);
     requestContext.setSecurityContext(catalogSecurityContext);
   }
@@ -199,15 +199,27 @@ public class JwtFilter implements ContainerRequestFilter {
     validatePersonalAccessToken(claims, tokenFromHeader, userName);
   }
 
-  private Set<String> getUserRolesFromClaims(Map<String, Claim> claims, boolean isBot) {
+  private Set<String> getUserRolesFromClaims(
+    Map<String, String> jwtPrincipalClaimsMapping,
+    Map<String, Claim> claims,
+    boolean isBot) {
     Set<String> userRoles = new HashSet<>();
+    List<String> roles = null;
     // Re-sync user roles from token
-    if (useRolesFromProvider && !isBot && claims.containsKey(ROLES_CLAIM)) {
-      List<String> roles = claims.get(ROLES_CLAIM).asList(String.class);
-      if (!nullOrEmpty(roles)) {
-        userRoles = new HashSet<>(claims.get(ROLES_CLAIM).asList(String.class));
+    if (useRolesFromProvider && !isBot) {
+      // We have a mapping available so we will use that
+      if (!nullOrEmpty(jwtPrincipalClaimsMapping)) {
+        String rolesClaim = jwtPrincipalClaimsMapping.get(ROLES_CLAIM);
+        roles = claims.get(rolesClaim).asList(String.class);
+      } else {
+        roles = claims.get(ROLES_CLAIM).asList(String.class);
       }
     }
+    
+    if (!nullOrEmpty(roles)) {
+      userRoles = new HashSet<>(roles);
+    }
+   
     return userRoles;
   }
 
